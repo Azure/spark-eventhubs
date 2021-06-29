@@ -143,9 +143,8 @@ private[sql] class EventHubsSourceProvider
 
 private[sql] object EventHubsSourceProvider extends Serializable {
   // RPC endpoint for partition performance communication in the driver
-  val partitionsStatusTracker = PartitionsStatusTracker.getPartitionStatusTracker
   val partitionPerformanceReceiver: PartitionPerformanceReceiver =
-    new PartitionPerformanceReceiver(SparkEnv.get.rpcEnv, partitionsStatusTracker)
+    new PartitionPerformanceReceiver(SparkEnv.get.rpcEnv)
   val partitionPerformanceReceiverRef: RpcEndpointRef = SparkEnv.get.rpcEnv
     .setupEndpoint(PartitionPerformanceReceiver.ENDPOINT_NAME, partitionPerformanceReceiver)
 

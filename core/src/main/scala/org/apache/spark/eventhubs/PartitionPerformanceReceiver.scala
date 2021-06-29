@@ -23,11 +23,23 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.rpc.{ RpcEndpoint, RpcEnv }
 import org.apache.spark.SparkContext
 import org.json4s.jackson.Serialization
+import scala.collection.mutable
 
-private[spark] class PartitionPerformanceReceiver(override val rpcEnv: RpcEnv,
-                                                  val statusTracker: PartitionsStatusTracker)
+private[spark] class PartitionPerformanceReceiver(override val rpcEnv: RpcEnv)
     extends RpcEndpoint
     with Logging {
+
+  // Keeps track of PartitionsStatusTracker per EventHub source
+  var statusTrackers: mutable.Map[String, PartitionsStatusTracker] =
+    mutable.Map[String, PartitionsStatusTracker]()
+
+  def addStatusTracker(ehName: String, statusTracker: PartitionsStatusTracker): Unit = {
+    statusTrackers(ehName) = statusTracker
+  }
+
+  def getStatusTracker(ehName: String): Option[PartitionsStatusTracker] = {
+    statusTrackers.get(ehName)
+  }
 
   override def onStart(): Unit = {
     logInfo("Start PartitionPerformanceReceiver RPC endpoint")
@@ -36,10 +48,18 @@ private[spark] class PartitionPerformanceReceiver(override val rpcEnv: RpcEnv,
   override def receive: PartialFunction[Any, Unit] = {
     case ppm: PartitionPerformanceMetric => {
       logDebug(s"Received PartitionPerformanceMetric $ppm")
-      statusTracker.updatePartitionPerformance(ppm.nAndP,
-                                               ppm.requestSeqNo,
-                                               ppm.batchSize,
-                                               ppm.receiveTimeInMillis)
+      val ehStatusTracker = getStatusTracker(ppm.nAndP.ehName)
+      ehStatusTracker match {
+        case Some(statusTracker) =>
+          statusTracker.updatePartitionPerformance(ppm.nAndP,
+                                                   ppm.requestSeqNo,
+                                                   ppm.batchSize,
+                                                   ppm.receiveTimeInMillis)
+        case None =>
+          logError(
+            s"PartitionPerformanceReceiver doesn't have a PartitionsStatusTracker for EventHub ${ppm.nAndP.ehName} " +
+              s"to send the received PartitionPerformanceMetric ${ppm}.")
+      }
     }
     case _ => {
       logError(s"Received an unknown message in PartitionPerformanceReceiver. It's not acceptable!")

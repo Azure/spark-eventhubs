@@ -62,9 +62,8 @@ object EventHubsUtils extends Logging {
           s"There is an existing partitionPerformanceReceiverRef on the driver, use that one rather than creating a new one")
       } catch {
         case e: Exception =>
-          val partitionsStatusTracker = PartitionsStatusTracker.getPartitionStatusTracker
           val partitionPerformanceReceiver: PartitionPerformanceReceiver =
-            new PartitionPerformanceReceiver(SparkEnv.get.rpcEnv, partitionsStatusTracker)
+            new PartitionPerformanceReceiver(SparkEnv.get.rpcEnv)
           partitionPerformanceReceiverRef = SparkEnv.get.rpcEnv
             .setupEndpoint(PartitionPerformanceReceiver.ENDPOINT_NAME, partitionPerformanceReceiver)
       }

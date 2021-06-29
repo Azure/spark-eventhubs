@@ -16,12 +16,27 @@
  */
 
 package org.apache.spark.eventhubs.utils
+import java.net.URI
+import org.apache.spark.eventhubs.{
+  DefaultMaxAcceptableBatchReceiveTime,
+  NameAndPartition,
+  PartitionContext,
+  PartitionsStatusTracker,
+  SequenceNumber
+}
 
-import org.apache.spark.eventhubs.{ NameAndPartition, PartitionsStatusTracker, SequenceNumber }
 import scala.collection.breakOut
 
 private[spark] object SimulatedPartitionStatusTracker {
-  val sourceTracker = PartitionsStatusTracker.getPartitionStatusTracker
+  var sourceTracker = new PartitionsStatusTracker(
+    1,
+    new PartitionContext(new URI("sb://namespace.servicebus.windows.net"), "mockEH"),
+    DefaultMaxAcceptableBatchReceiveTime.toMillis,
+    None)
+
+  def updateSourceTrackerForNewEH(tracker: PartitionsStatusTracker) = {
+    sourceTracker = tracker
+  }
 
   def updatePartitionPerformance(nAndP: NameAndPartition,
                                  requestSeqNo: SequenceNumber,
