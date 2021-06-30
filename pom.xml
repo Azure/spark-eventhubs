@@ -50,7 +50,7 @@
     <properties>
         <sbt.project.name>azure-eventhubs-spark-parent</sbt.project.name>
         <scala.binary.version>2.11</scala.binary.version>
-        <spark.version>2.3.3</spark.version>
+        <spark.version>2.4.7</spark.version>
         <github.global.server>github</github.global.server>
         <java.version>1.8</java.version>
         <CodeCacheSize>1g</CodeCacheSize>
@@ -58,6 +58,7 @@
 
     <modules>
         <module>core</module>
+        <module>schemaregistry-avro</module>
     </modules>
 
     <profiles>
